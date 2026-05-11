@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => {
 		clipboard: {
 			setText: vi.fn<(text: string) => Promise<void>>(),
 		},
+		getClipboard: vi.fn(),
 		execSync: vi.fn(),
 		spawn: vi.fn(),
 		platform: vi.fn<() => NodeJS.Platform>(),
@@ -17,7 +18,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("../src/utils/clipboard-native.js", () => {
 	return {
-		clipboard: mocks.clipboard,
+		getClipboard: mocks.getClipboard,
 	};
 });
 
@@ -60,6 +61,8 @@ beforeEach(() => {
 	stdoutWrites = [];
 	nativeResolved = false;
 	mocks.clipboard.setText.mockReset();
+	mocks.getClipboard.mockReset();
+	mocks.getClipboard.mockReturnValue(mocks.clipboard);
 	mocks.execSync.mockReset();
 	mocks.spawn.mockReset();
 	mocks.platform.mockReset();

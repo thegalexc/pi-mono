@@ -1,7 +1,7 @@
 import { execSync, spawn } from "child_process";
 import { platform } from "os";
 import { isWaylandSession } from "./clipboard-image.js";
-import { clipboard } from "./clipboard-native.js";
+import { getClipboard } from "./clipboard-native.js";
 
 type NativeClipboardExecOptions = {
 	input: string;
@@ -48,6 +48,7 @@ export async function copyToClipboard(text: string): Promise<void> {
 	// clipboard. The platform tools below (wl-copy, xclip, xsel) properly
 	// daemonize and keep ownership.
 	try {
+		const clipboard = getClipboard();
 		if (clipboard && p !== "linux") {
 			await clipboard.setText(text);
 			copied = true;

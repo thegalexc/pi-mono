@@ -7,16 +7,37 @@ export type ClipboardModule = {
 };
 
 const require = createRequire(import.meta.url);
-let clipboard: ClipboardModule | null = null;
+let clipboard: ClipboardModule | null | undefined;
 
-const hasDisplay = process.platform !== "linux" || Boolean(process.env.DISPLAY || process.env.WAYLAND_DISPLAY);
+function hasDisplay(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): boolean {
+	return platform !== "linux" || Boolean(env.DISPLAY || env.WAYLAND_DISPLAY);
+}
 
-if (!process.env.TERMUX_VERSION && hasDisplay) {
+export function getClipboard(options?: {
+	env?: NodeJS.ProcessEnv;
+	platform?: NodeJS.Platform;
+	forceReload?: boolean;
+}): ClipboardModule | null {
+	if (options?.forceReload) {
+		clipboard = undefined;
+	}
+
+	if (clipboard !== undefined) {
+		return clipboard;
+	}
+
+	const env = options?.env ?? process.env;
+	const platform = options?.platform ?? process.platform;
+	if (env.TERMUX_VERSION || !hasDisplay(env, platform)) {
+		clipboard = null;
+		return clipboard;
+	}
+
 	try {
 		clipboard = require("@mariozechner/clipboard") as ClipboardModule;
 	} catch {
 		clipboard = null;
 	}
-}
 
-export { clipboard };
+	return clipboard;
+}

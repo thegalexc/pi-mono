@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
 			hasImage: vi.fn<() => boolean>(),
 			getImageBinary: vi.fn<() => Promise<Uint8Array | null>>(),
 		},
+		getClipboard: vi.fn(),
 	};
 });
 
@@ -20,7 +21,7 @@ vi.mock("child_process", () => {
 
 vi.mock("../src/utils/clipboard-native.js", () => {
 	return {
-		clipboard: mocks.clipboard,
+		getClipboard: mocks.getClipboard,
 	};
 });
 
@@ -53,6 +54,8 @@ describe("readClipboardImage", () => {
 		mocks.spawnSync.mockReset();
 		mocks.clipboard.hasImage.mockReset();
 		mocks.clipboard.getImageBinary.mockReset();
+		mocks.getClipboard.mockReset();
+		mocks.getClipboard.mockReturnValue(mocks.clipboard);
 	});
 
 	test("Wayland: uses wl-paste and never calls clipboard", async () => {
