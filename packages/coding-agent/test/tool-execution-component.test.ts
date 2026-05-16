@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
-import { Text, type TUI } from "@earendil-works/pi-tui";
+import { resetCapabilitiesCache, setCapabilities, setCellDimensions, Text, type TUI } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
-import { beforeAll, describe, expect, test } from "vitest";
+import { afterEach, beforeAll, describe, expect, test } from "vitest";
 import { getReadmePath } from "../src/config.js";
 import type { ToolDefinition } from "../src/core/extensions/types.js";
 import { type BashOperations, createBashToolDefinition } from "../src/core/tools/bash.js";
@@ -30,9 +30,25 @@ function createFakeTui(): TUI {
 	} as unknown as TUI;
 }
 
+function createFakePngBase64(width: number, height: number): string {
+	const buffer = Buffer.alloc(24);
+	buffer[0] = 0x89;
+	buffer[1] = 0x50;
+	buffer[2] = 0x4e;
+	buffer[3] = 0x47;
+	buffer.writeUInt32BE(width, 16);
+	buffer.writeUInt32BE(height, 20);
+	return buffer.toString("base64");
+}
+
 describe("ToolExecutionComponent parity", () => {
 	beforeAll(() => {
 		initTheme("dark");
+	});
+
+	afterEach(() => {
+		resetCapabilitiesCache();
+		setCellDimensions({ widthPx: 9, heightPx: 18 });
 	});
 
 	test("stacks custom call and result renderers like the old implementation", () => {
@@ -329,6 +345,34 @@ describe("ToolExecutionComponent parity", () => {
 		expect(rendered).toContain("one");
 		expect(rendered).toContain("two");
 		expect(rendered).not.toContain("two\n\n");
+	});
+
+	test("bounds inline tool image previews to a fixed maximum height", () => {
+		setCapabilities({ images: "kitty", trueColor: true, hyperlinks: true });
+		setCellDimensions({ widthPx: 9, heightPx: 18 });
+
+		const component = new ToolExecutionComponent(
+			"screenshot",
+			"tool-image-height",
+			{},
+			{ showImages: true, imageWidthCells: 60 },
+			undefined,
+			createFakeTui(),
+			process.cwd(),
+		);
+		component.updateResult(
+			{
+				content: [{ type: "image", data: createFakePngBase64(390, 844), mimeType: "image/png" }],
+				details: {},
+				isError: false,
+			},
+			false,
+		);
+
+		const rendered = component.render(120);
+		const imageStartIndex = rendered.findIndex((line) => line.includes("\x1b_G"));
+		expect(imageStartIndex).toBeGreaterThanOrEqual(0);
+		expect(rendered.length - imageStartIndex).toBe(10);
 	});
 
 	for (const scenario of [

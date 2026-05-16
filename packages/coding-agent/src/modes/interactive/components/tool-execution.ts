@@ -5,9 +5,12 @@ import { getTextOutput as getRenderedTextOutput } from "../../../core/tools/rend
 import { convertToPng } from "../../../utils/image-convert.js";
 import { theme } from "../theme/theme.js";
 
+const DEFAULT_TOOL_IMAGE_MAX_HEIGHT_CELLS = 10;
+
 export interface ToolExecutionOptions {
 	showImages?: boolean;
 	imageWidthCells?: number;
+	imageHeightCells?: number;
 }
 
 export class ToolExecutionComponent extends Container {
@@ -25,6 +28,7 @@ export class ToolExecutionComponent extends Container {
 	private expanded = false;
 	private showImages: boolean;
 	private imageWidthCells: number;
+	private imageHeightCells: number;
 	private isPartial = true;
 	private toolDefinition?: ToolDefinition<any, any>;
 	private builtInToolDefinition?: ToolDefinition<any, any>;
@@ -57,6 +61,7 @@ export class ToolExecutionComponent extends Container {
 		this.builtInToolDefinition = createAllToolDefinitions(cwd)[toolName as ToolName];
 		this.showImages = options.showImages ?? true;
 		this.imageWidthCells = options.imageWidthCells ?? 60;
+		this.imageHeightCells = options.imageHeightCells ?? DEFAULT_TOOL_IMAGE_MAX_HEIGHT_CELLS;
 		this.ui = ui;
 		this.cwd = cwd;
 
@@ -320,7 +325,7 @@ export class ToolExecutionComponent extends Container {
 						imageData,
 						imageMimeType,
 						{ fallbackColor: (s: string) => theme.fg("toolOutput", s) },
-						{ maxWidthCells: this.imageWidthCells },
+						{ maxWidthCells: this.imageWidthCells, maxHeightCells: this.imageHeightCells },
 					);
 					this.imageComponents.push(imageComponent);
 					this.addChild(imageComponent);
