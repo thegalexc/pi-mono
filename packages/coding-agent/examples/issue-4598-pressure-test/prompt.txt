@@ -1,0 +1,1 @@
+Call the tall_image tool exactly once now. After the tool result, reply with one short sentence only.
